@@ -50,7 +50,9 @@ button:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
 .card .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .card .k{font:700 11px/1 var(--mono);color:var(--bg);background:var(--dim);padding:3px 6px}
 .card .tag{font:700 11px/1.2 var(--mono);letter-spacing:.08em}
-.card strong{font-size:18px}
+.card strong{font-size:18px;text-align:center}
+.card .ic{align-self:center;width:54px;height:54px;image-rendering:pixelated;image-rendering:crisp-edges;background:#3a4466;border:2px solid var(--dim);padding:6px;box-sizing:content-box;margin-top:4px}
+.card .d{text-align:center}
 .card .d{font-size:13px;line-height:1.5;color:var(--dim)}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .stats div{background:var(--panel);padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -209,14 +211,14 @@ const WEAP={
  bolt:{name:'落雷',abbr:'BOLT',col:'#a7f070',evo:{col:'#fff04d',name:'雷暴',abbr:'THUNDER',desc:'一次劈中 10 個敵人，冷卻更短，傷害 +40%'},lv:['隨機劈中畫面上 2 個敵人','多劈 1 個、傷害提升','多劈 1 個','多劈 1 個、冷卻縮短','一次劈中 6 個敵人']},
 };
 const PASSIVES=[
- {name:'力量',desc:'所有傷害 +15%',apply:p=>p.dmgMul*=1.15},
- {name:'急速',desc:'所有武器冷卻 -10%',apply:p=>p.rateMul*=.9},
- {name:'疾行',desc:'移動速度 +10%',apply:p=>p.speed*=1.1},
- {name:'強壯',desc:'最大生命 +20，並回復 20',apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+20)}},
- {name:'磁力',desc:'經驗值拾取範圍 +35%',apply:p=>p.magnet*=1.35},
- {name:'擴張',desc:'你已經擁有的環繞刃／震波，攻擊範圍 +15%',need:['orbit','nova'],apply:p=>p.area*=1.15},
- {name:'再生',desc:'每秒回復 0.6 生命',apply:p=>p.regen+=.6},
- {name:'護甲',desc:'每次受到的傷害 -1',apply:p=>p.armor+=1},
+ {name:'力量',icon:'dmg',desc:'所有傷害 +15%',apply:p=>p.dmgMul*=1.15},
+ {name:'急速',icon:'rate',desc:'所有武器冷卻 -10%',apply:p=>p.rateMul*=.9},
+ {name:'疾行',icon:'spd',desc:'移動速度 +10%',apply:p=>p.speed*=1.1},
+ {name:'強壯',icon:'hp',desc:'最大生命 +20，並回復 20',apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+20)}},
+ {name:'磁力',icon:'mag',desc:'經驗值拾取範圍 +35%',apply:p=>p.magnet*=1.35},
+ {name:'擴張',icon:'area',desc:'你已經擁有的環繞刃／震波，攻擊範圍 +15%',need:['orbit','nova'],apply:p=>p.area*=1.15},
+ {name:'再生',icon:'regen',desc:'每秒回復 0.6 生命',apply:p=>p.regen+=.6},
+ {name:'護甲',icon:'armor',desc:'每次受到的傷害 -1',apply:p=>p.armor+=1},
 ];
 const RELICS={
  fang:{name:'吸血之牙',desc:'每擊倒 1 隻怪物回復 1 生命'},
@@ -495,6 +497,34 @@ function render(){
 const STAR=["...#...","..###..","#######",".#####.",".##.##.","##...##"];
 function drawStar(x,y,c,seed){for(const [ox,oy,col] of [[1,1,PAL.k],[0,0,c]])for(let j=0;j<6;j++)for(let i=0;i<7;i++)if(STAR[j][i]==='#'){ctx.fillStyle=col;ctx.fillRect(x+i+ox,y+j+oy,1,1)}
  const ph=(G.t*3+seed*.7)%3;if(ph<.5){ctx.fillStyle=PAL.w;ctx.fillRect(x+3,y+1,1,1);ctx.fillRect(x+3,y+2,1,1)}else if(ph<1){ctx.fillStyle=PAL.w;ctx.fillRect(x+2,y+3,3,1)}}
+/* ---------- card icons (9x9) ---------- */
+const ICONS={
+ blaster:[".........",".....kkk.","....kywyk","...okwwwk","..o.kywyk",".o...kkk.","o..o.....",".o.......","........."],
+ spread:["....a....",".a..a..a.","..a.a.a..","...aaa...","....w....","...kak...","..kaaak..","..kaaak..","...kkk..."],
+ orbit:["....k....","...kwk...","...kwk...",".kkkskkk.","kwwsaswwk",".kkkskkk.","...kwk...","...kwk...","....k...."],
+ nova:["...ooo...",".oo...oo.","o..yyy..o","o.y...y.o","o.y.w.y.o","o.y...y.o","o..yyy..o",".oo...oo.","...ooo..."],
+ bolt:[".....kkk.","....kllk.","...kllk..","..kllkkk.",".kllllllk",".kkkkllk.","...kllk..","..kllk...","..kkk...."],
+ dmg:[".......kk","......kwk",".....kwk.","....kwk..",".k.kwk...",".kkwk....","..ok.....",".oko.....","oo.k....."],
+ rate:["..kkkkk..",".kwwwwwk.","kwwwkwwwk","kwwwkwwwk","kwwwkkkwk","kwwwwwwwk","kwwwwwwwk",".kwwwwwk.","..kkkkk.."],
+ spd:["..kkkk...","..kbbk...","..kbbk..a","..kbbk...","..kbbkk.a",".kbbbbbk.","kbbbbbbbk","kssssssk.",".kkkkkk.."],
+ hp:[".........",".kk...kk.","krrk.krrk","krwrkrrrk","krrrrrrrk",".krrrrrk.","..krrrk..","...krk...","....k...."],
+ mag:[".........","kkk...kkk","kwk...kwk","krk...krk","krk...krk","krrk.krrk",".krrrrrk.","..kkkkk..","........."],
+ area:["....a....","...aaa...","....a....",".a.....a.","aaa.w.aaa",".a.....a.","....a....","...aaa...","....a...."],
+ regen:[".........","...kkk...","...klk...",".kkklkkk.",".klllllk.",".kkklkkk.","...klk...","...kkk...","........."],
+ armor:[".kkkkkkk.","ksssssssk","kswwbwwsk","kswbbbwsk","ksswbwssk",".kssbssk.",".ksssssk.","..ksssk..","...kkk..."],
+ fang:[".........","kkkkkkkkk","kwwwwwwwk",".kwk.kwk.",".kwk.kwk.","..k...k..","..r...r..",".........","..r...r.."],
+ split:["....k....","...kak...","..kaawk..",".kaaawak.","kcaaaaack",".kcaaack.","..kcack..","...kck...","....k...."],
+ revenge:[".o.....o.",".kk...kk.","kppk.kppk","kppkkpppk","kppppkppk",".kppkppk.","..kpppk..","...kpk...","....k...."],
+ greed:[".........",".........","..kkkkk..",".kwyyywk.","kwyykyywk",".kwyyywk.","..kkkkk..",".........","........."],
+ angel:["..yyyyy..",".y.....y.","..yyyyy..","ww..k..ww","www.k.www","wwwkwkwww",".ww.w.ww.","...k.k...","........."],
+ clover:[".........",".kk...kk.","kggk.kggk","kgggkgggk",".kkglgkk.","kgggkgggk","kggk.kggk",".kk.k.kk.","....k...."],
+ frost:["....a....",".a..a..a.","..a.a.a..","...aaa...","aaaawaaaa","...aaa...","..a.a.a..",".a..a..a.","....a...."],
+ xp:["....w....","...www...","..w.w.w..","....w....","...kck...","..kcack..",".kcaaack.","..kcack..","...kck..."],
+};
+const iconCache={};
+function iconURL(key,tint){const id=key+(tint||'');if(iconCache[id])return iconCache[id];const rows=ICONS[key];if(!rows)return'';
+ let map;if(tint){map={};for(const k in PAL)map[k]=k==='k'?PAL.k:k==='w'?PAL.w:tint}
+ return iconCache[id]=mk(rows,map).toDataURL()}
 const RAINBOW=['#ff4d6d','#ffcd75','#a7f070','#73eff7','#4d8dff','#b57bff'];
 const TIERS={
  2:{lv:10,name:'AWAKENED',sub:'MAX HP +30',c1:'#ffcd75',c2:'#73eff7',apply:p=>{}},
@@ -599,10 +629,10 @@ const ov={title:$('#ovTitle'),choice:$('#ovChoice'),pause:$('#ovPause'),over:$('
 function showOv(name){for(const k in ov)ov[k].hidden=k!==name}
 let choiceOpts=[],choiceAt=0;
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=(rnd()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}return a}
-function passiveOpts(n){return shuffle(PASSIVES.filter(x=>!x.need||G.weapons.some(w=>x.need.includes(w.id)))).slice(0,n).map(x=>({tag:'能力強化',col:'#94b0c2',name:x.name,desc:x.desc,ban:'POWER UP',apply:()=>x.apply(G.p)}))}
+function passiveOpts(n){return shuffle(PASSIVES.filter(x=>!x.need||G.weapons.some(w=>x.need.includes(w.id)))).slice(0,n).map(x=>({tag:'能力強化',col:'#94b0c2',icon:x.icon,name:x.name,desc:x.desc,ban:'POWER UP',apply:()=>x.apply(G.p)}))}
 function weaponOpts(){const o=[];for(const id in WEAP){const w=G.weapons.find(x=>x.id===id),d=WEAP[id];
-  if(!w)o.push({tag:'新武器',col:'#ffcd75',name:d.name,desc:d.lv[0],ban:'NEW '+d.abbr+'!',apply:()=>G.weapons.push({id,lvl:1,cd:0})});
-  else if(w.lvl<5)o.push({tag:`武器 LV ${w.lvl}→${w.lvl+1}`,col:'#73eff7',name:d.name,desc:d.lv[w.lvl]+(w.lvl===4?'。滿級後開寶箱可以進化':''),ban:d.abbr+' LV '+(w.lvl+1),apply:()=>{w.lvl++}})}
+  if(!w)o.push({tag:'新武器',col:'#ffcd75',icon:id,name:d.name,desc:d.lv[0],ban:'NEW '+d.abbr+'!',apply:()=>G.weapons.push({id,lvl:1,cd:0})});
+  else if(w.lvl<5)o.push({tag:`武器 LV ${w.lvl}→${w.lvl+1}`,col:'#73eff7',icon:id,name:d.name,desc:d.lv[w.lvl]+(w.lvl===4?'。滿級後開寶箱可以進化':''),ban:d.abbr+' LV '+(w.lvl+1),apply:()=>{w.lvl++}})}
  return shuffle(o)}
 function levelOpts(){const n=G.relics.has('clover')?4:3,wo=weaponOpts(),po=passiveOpts(99),res=[];
  while(res.length<n&&(wo.length||po.length)){const needW=res.length===n-1&&!res.some(x=>x.w);
@@ -612,16 +642,16 @@ function chestOpts(){
  const evo=G.weapons.filter(w=>w.lvl>=5&&!w.evo),rel=Object.keys(RELICS).filter(k=>!G.relics.has(k));
  let kind;if(evo.length&&rnd()<.6)kind='evo';else kind=rel.length&&rnd()<.55?'relic':'xp';
  if(kind==='evo'){const w=evo[(rnd()*evo.length)|0],d=WEAP[w.id];
-  return{title:'寶箱！你的武器進化了',opts:[{tag:'武器進化',col:'#ffcd75',name:d.name+' → '+d.evo.name,desc:d.evo.desc,ban:d.evo.abbr+'!',apply:()=>{w.evo=true}}]}}
- if(kind==='relic')return{title:'寶箱！選一個遺物',opts:shuffle(rel).slice(0,3).map(k=>({tag:'遺物',col:'#ef7d57',name:RELICS[k].name,desc:RELICS[k].desc,ban:'RELIC!',apply:()=>G.relics.add(k)}))};
- return{title:'寶箱！經驗爆發',opts:[{tag:'經驗爆發',col:'#73eff7',name:'連升 3 級',desc:'立刻升 3 級，接著選 3 次強化',ban:'LV UP X3!',
+  return{title:'寶箱！你的武器進化了',opts:[{tag:'武器進化',col:d.evo.col,icon:w.id,tint:d.evo.col,name:d.name+' → '+d.evo.name,desc:d.evo.desc,ban:d.evo.abbr+'!',apply:()=>{w.evo=true}}]}}
+ if(kind==='relic')return{title:'寶箱！選一個遺物',opts:shuffle(rel).slice(0,3).map(k=>({tag:'遺物',col:'#ef7d57',icon:k,name:RELICS[k].name,desc:RELICS[k].desc,ban:'RELIC!',apply:()=>G.relics.add(k)}))};
+ return{title:'寶箱！經驗爆發',opts:[{tag:'經驗爆發',col:'#73eff7',icon:'xp',name:'連升 3 級',desc:'立刻升 3 級，接著選 3 次強化',ban:'LV UP X3!',
   apply:()=>{for(let i=0;i<3;i++){G.lvl++;G.need=needFor(G.lvl);G.queue.push('level')}snd('level')}}]}}
 function openChoice(){
  const kind=G.queue.shift();state='choice';joy=null;let opts;
  if(kind==='chest'){const c=chestOpts();opts=c.opts;$('#chEye').textContent='Treasure';$('#chTitle').textContent=c.title;$('#chNote').textContent=''}
  else{opts=levelOpts();$('#chEye').textContent='Level Up · LV '+G.lvl;$('#chTitle').textContent='升級了，選一項';$('#chNote').textContent='新武器、武器升級和能力強化都會隨機出現。'}
  choiceOpts=opts;choiceAt=performance.now();
- $('#chCards').innerHTML=opts.map((o,i)=>`<button class="card" type="button" data-i="${i}"><span class="top"><span class="tag" style="color:${o.col}">${o.tag}</span><span class="k">${i+1}</span></span><strong>${o.name}</strong><span class="d">${o.desc}</span></button>`).join('');
+ $('#chCards').innerHTML=opts.map((o,i)=>`<button class="card" type="button" data-i="${i}"><span class="top"><span class="tag" style="color:${o.col}">${o.tag}</span><span class="k">${i+1}</span></span><img class="ic" alt="" src="${iconURL(o.icon,o.tint)}" style="border-color:${o.col}"><strong>${o.name}</strong><span class="d">${o.desc}</span></button>`).join('');
  showOv('choice');
 }
 $('#chCards').addEventListener('click',e=>{const b=e.target.closest('.card');if(b)pick(+b.dataset.i)});
